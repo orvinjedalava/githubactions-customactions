@@ -22,6 +22,8 @@ jobs:
       # use composite action
       - name: Load and cache dependencies
         uses: ./.github/workflows/actions/cached-deps
+        with:
+          caching: 'false'
       - name: Test code
         id: run-tests
         run: npm run test
