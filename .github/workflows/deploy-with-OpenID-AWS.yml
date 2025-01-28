@@ -1,0 +1,92 @@
+name: Deployment
+on: workflow_dispatch
+  # push:
+  #   branches:
+  #     - main
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get code
+        uses: actions/checkout@v3
+      # use composite action
+      - name: Load and cache dependencies
+        uses: ./.github/actions/cached-deps
+      - name: Lint code
+        run: npm run lint
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get code
+        uses: actions/checkout@v3
+      # use composite action
+      - name: Load and cache dependencies
+        id: cache-deps
+        uses: ./.github/actions/cached-deps
+        with:
+          caching: 'false'
+      - name: Output information
+        run: echo "Cache used? ${{ steps.cache-deps.outputs.used-cache }}"
+      - name: Test code
+        id: run-tests
+        run: npm run test
+      - name: Upload test report
+        if: failure() && steps.run-tests.outcome == 'failure'
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-report
+          path: test.json
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get code
+        uses: actions/checkout@v3
+      # use composite action
+      - name: Load and cache dependencies
+        uses: ./.github/actions/cached-deps
+      - name: Build website
+        run: npm run build
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: dist-files
+          path: dist
+  deploy:
+    permissions:
+      id-token: write # allow to write a new github token to connect to s3
+      contents: read # allow to get latest code from repository
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get code
+        uses: actions/checkout@v3
+      - name: Get build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: dist-files
+          path: ./dist
+      - name: Output contents
+        run: ls
+      # https://www.udemy.com/course/github-actions-the-complete-guide/learn/lecture/34140726#overview
+      - name: Get AWS permissions
+        uses: aws-actions/configure-aws-credentials
+        with:
+          role-to-assume: arn:aws:iam::123456789012:role/role-name # taken from AWS
+          aws-region: us-east-1
+      # There are existing github actions for deploying static websites to S3
+      # This is just an example of how to use javascript custom action
+      - name: Deploy site using custom javascript action
+        id: deploy 
+        uses: ./.github/actions/deploy-s3-javascript
+        
+        with:
+          bucket: 'jalava-gha-custom-action-hosting'
+          dist-folder: ./dist
+          # bucket-region: us-east-1
+
+      - name: Output website URL
+        run: | 
+          echo "Website URL: ${{ steps.deploy.outputs.website-url }}"
+    
+  
