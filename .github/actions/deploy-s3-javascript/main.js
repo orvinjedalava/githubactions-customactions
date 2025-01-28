@@ -16,9 +16,13 @@ function run() {
 
   // 2) Upload files to S3
   const s3Uri = `s3://${bucket}`;
+  // IMPORTANT: Create an access key in AWS to access the bucket.
+  // Please see this repository's Github Secrets to store the access key and secret key.
   exec.exec(`aws s3 sync ${distFolder} ${s3Uri} --region ${bucketRegion}`);
 
-  core.notice('Hello from my custom JavaScript Action!');
+  // core.notice('Hello from my custom JavaScript Action!');
+  const websiteURL = `http://${bucket}.s3-website-${bucketRegion}.amazonaws.com`;
+  core.setOutput('website-url', websiteURL);
 }
 
 run();

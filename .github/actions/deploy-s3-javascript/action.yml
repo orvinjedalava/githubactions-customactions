@@ -11,6 +11,10 @@ inputs:
   dist-folder:
     description: 'The folder containing the static files to deploy.'
     required: true
+outputs:
+  website-url:
+    description: 'The URL of the deployed website.'
+    value: ${{ steps.deploy.outputs.url }}
 runs:
   using: 'node16'
 #   pre: 'setup.js'
