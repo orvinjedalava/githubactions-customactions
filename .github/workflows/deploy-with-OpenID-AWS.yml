@@ -70,7 +70,7 @@ jobs:
         run: ls
       # https://www.udemy.com/course/github-actions-the-complete-guide/learn/lecture/34140726#overview
       - name: Get AWS permissions
-        uses: aws-actions/configure-aws-credentials
+        uses: aws-actions/configure-aws-credentials@v1
         with:
           role-to-assume: arn:aws:iam::123456789012:role/role-name # taken from AWS
           aws-region: us-east-1
